@@ -4,124 +4,16 @@
   <meta charset="UTF-8">
   <title>Snake - 랭킹</title>
   <link rel="stylesheet" href="styles.css">
-  <style>
-    body {
-      margin: 0;
-      font-family: system-ui, sans-serif;
-      background: #f5f5f5;
-    }
-    .site-header, .site-footer {
-      background: #222;
-      color: #fff;
-      padding: 10px 16px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .site-header .logo a {
-      color: #fff;
-      text-decoration: none;
-      font-weight: bold;
-      font-size: 1.2rem;
-    }
-    .site-nav a {
-      color: #ccc;
-      margin-left: 10px;
-      text-decoration: none;
-      font-size: 0.9rem;
-    }
-    .site-nav a.active {
-      color: #fff;
-      font-weight: bold;
-      text-decoration: underline;
-    }
-    .site-footer {
-      font-size: 0.8rem;
-      justify-content: center;
-    }
-
-    main.layout-ranking {
-      display: flex;
-      flex-direction: column;
-      min-height: calc(100vh - 100px);
-      box-sizing: border-box;
-      padding: 16px;
-    }
-
-    .ranking-controls {
-      margin-bottom: 10px;
-      display: flex;
-      gap: 8px;
-    }
-    .ranking-controls button {
-      padding: 6px 12px;
-      border-radius: 4px;
-      border: 1px solid #ccc;
-      cursor: pointer;
-      background: #e0e0e0;
-      font-size: 0.9rem;
-    }
-    .ranking-controls button.active {
-      background: #1976d2;
-      color: #fff;
-      border-color: #1976d2;
-    }
-
-    .ranking-main {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .my-status {
-      background: #fff;
-      padding: 10px;
-      border-radius: 6px;
-      border: 1px solid #ddd;
-      font-size: 0.9rem;
-      display: flex;
-      justify-content: space-between;
-    }
-    .my-status span.value {
-      font-weight: bold;
-    }
-
-    .ranking-content {
-      flex: 1;
-      background: #fff;
-      padding: 12px;
-      border-radius: 6px;
-      border: 1px solid #ddd;
-      box-sizing: border-box;
-      font-size: 0.9rem;
-    }
-
-    .ranking-list {
-      list-style: none;
-      margin: 0;
-      padding: 0;
-    }
-    .ranking-list li {
-      display: flex;
-      justify-content: space-between;
-      padding: 6px 0;
-      border-bottom: 1px solid #eee;
-    }
-    .ranking-list li:last-child {
-      border-bottom: none;
-    }
-  </style>
 </head>
 <body>
 <header class="site-header">
-  <div class="logo"><a href="main.html">SNAKE</a></div>
+  <div class="logo"><a href="index.html">SNAKE</a></div>
   <nav class="site-nav">
-    <a href="index.html">메인</a>
+    <a href="index.html">홈</a>
     <a href="game.html">게임</a>
-    <a href="rules.html">설명</a>
+    <a href="rules.html">게임 설명</a>
     <a href="achievements.html">업적</a>
-    <a href="ranking.html" class="active">랭킹</a>
+    <a href="ranking.html" class="current">랭킹</a>
   </nav>
 </header>
 
@@ -165,7 +57,7 @@
 </main>
 
 <footer class="site-footer">
-  Credit
+  Made by taewonson
 </footer>
 
 <script>

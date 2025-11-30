@@ -4,95 +4,14 @@
   <meta charset="UTF-8">
   <title>Snake - 게임 설명</title>
   <link rel="stylesheet" href="styles.css">
-  <style>
-    /* 페이지 전용 최소 스타일 (styles.css에 옮겨도 됨) */
-    body {
-      margin: 0;
-      font-family: system-ui, sans-serif;
-      background: #f5f5f5;
-    }
-    .site-header, .site-footer {
-      background: #222;
-      color: #fff;
-      padding: 10px 16px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .site-header .logo a {
-      color: #fff;
-      text-decoration: none;
-      font-weight: bold;
-      font-size: 1.2rem;
-    }
-    .site-nav a {
-      color: #ccc;
-      margin-left: 10px;
-      text-decoration: none;
-      font-size: 0.9rem;
-    }
-    .site-nav a.active {
-      color: #fff;
-      font-weight: bold;
-      text-decoration: underline;
-    }
-    .site-footer {
-      font-size: 0.8rem;
-      justify-content: center;
-    }
-
-    main.layout-rules {
-      display: grid;
-      grid-template-columns: 220px 1fr;
-      min-height: calc(100vh - 100px); /* header+footer 제외 */
-    }
-
-    .rules-menu {
-      background: #e0e0e0;
-      padding: 16px;
-      box-sizing: border-box;
-      border-right: 1px solid #ccc;
-    }
-    .rules-menu h2 {
-      margin-top: 0;
-      font-size: 1rem;
-    }
-    .rules-menu button {
-      width: 100%;
-      margin-bottom: 8px;
-      padding: 8px;
-      border: none;
-      background: #fff;
-      cursor: pointer;
-      text-align: left;
-      border-radius: 4px;
-    }
-    .rules-menu button.active {
-      background: #1976d2;
-      color: #fff;
-    }
-
-    .rules-content {
-      padding: 20px;
-      box-sizing: border-box;
-      background: #fafafa;
-    }
-    .rules-content h2 {
-      margin-top: 0;
-    }
-    .rules-content p {
-      line-height: 1.5;
-      margin: 0 0 8px 0;
-    }
-  </style>
 </head>
 <body>
 <header class="site-header">
-  <div class="logo"><a href="main.html">SNAKE</a></div>
+  <div class="logo"><a href="index.html">SNAKE</a></div>
   <nav class="site-nav">
-    <a href="index.html">메인</a>
+    <a href="index.html">홈</a>
     <a href="game.html">게임</a>
-    <a href="rules.html" class="active">설명</a>
+    <a href="rules.html" class="current">게임 설명</a>
     <a href="achievements.html">업적</a>
     <a href="ranking.html">랭킹</a>
   </nav>
@@ -118,7 +37,7 @@
 </main>
 
 <footer class="site-footer">
-  Credit
+  Made by taewonson
 </footer>
 
 <script>

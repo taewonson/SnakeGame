@@ -1,4 +1,4 @@
-<!-- main.html -->
+<!-- index.html (메인 화면) -->
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -8,38 +8,44 @@
 </head>
 <body>
 
-  <!-- header -->
-  <header class="header">
-    <div class="header-title">SNAKE</div>
-    <nav class="nav">
+  <!-- header: 사이트 공통 헤더 -->
+  <header class="site-header">
+    <div class="logo">
+      <a href="index.html">SNAKE</a>
+    </div>
+    <nav class="site-nav">
       <a href="index.html" class="current">홈</a>
       <a href="game.html">게임</a>
-      <a href="rule.html">게임 설명</a>
-      <a href="achievement.html">업적</a>
+      <a href="rules.html">게임 설명</a>
+      <a href="achievements.html">업적</a>
       <a href="ranking.html">랭킹</a>
     </nav>
   </header>
 
-  <!-- main -->
+  <!-- main: 메인 콘텐츠 영역 -->
   <main class="main">
+    <!-- 상단 타이틀 영역 -->
     <section class="hero">
       <h1 class="hero-title">SNAKE</h1>
-      <p class="hero-subtitle">웹 스네이크 게임과 업적·랭킹 시스템을 제공하는 사이트입니다.</p>
+      <p class="hero-subtitle">
+        웹 스네이크 게임과 업적 · 랭킹 시스템을 제공하는 사이트입니다.
+      </p>
     </section>
 
+    <!-- 메인 메뉴 버튼 4개 -->
     <section>
       <div class="menu-grid">
         <a href="game.html" class="menu-button">게임 시작</a>
-        <a href="rule.html" class="menu-button">게임 설명</a>
-        <a href="achievement.html" class="menu-button">업적</a>
+        <a href="rules.html" class="menu-button">게임 설명</a>
+        <a href="achievements.html" class="menu-button">업적</a>
         <a href="ranking.html" class="menu-button">랭킹</a>
       </div>
     </section>
   </main>
 
-  <!-- footer -->
-  <footer class="footer">
-    made by taewonson
+  <!-- footer: 공통 푸터 -->
+  <footer class="site-footer">
+    Made by taewonson
   </footer>
 
 </body>

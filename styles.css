@@ -1,197 +1,450 @@
-/* styles.css */
-
-/* Reset & 기본 설정 */
+/* =============================
+   공통 초기화
+============================= */
 * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* =============================
+   페이지 전체 레이아웃
+   - header / main / footer 세로 배치
+   - footer는 항상 화면 맨 아래
+============================= */
+html, body {
+  height: 100%;
 }
 
 body {
-    font-family: Arial, sans-serif;
-    background: #f5f5f5;
-    color: #333;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  font-family: 'Arial', sans-serif;
+  background-color: #F7F7F7;
+  color: #222;
 }
 
-/* 공통 레이아웃 */
+/* 모든 페이지의 main 요소는
+   header와 footer 사이를 채우는 영역 */
+main {
+  flex: 1;
+}
+
+/* 링크 기본 */
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* =============================
+   공통 헤더 / 푸터
+   (.site-header / .header 둘 다 지원)
+============================= */
+.site-header,
 .header {
-    background: #222;
-    color: #fff;
-    padding: 16px 24px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+  background: #222;
+  color: #fff;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
+/* 로고(사이트 제목) */
+.site-header .logo a,
 .header-title {
-    font-size: 24px;
-    font-weight: bold;
+  color: #fff;
+  text-decoration: none;
+  font-weight: bold;
+  font-size: 1.2rem;
 }
 
-.nav {
-    display: flex;
-    gap: 12px;
-}
-
+/* 네비게이션 (.site-nav / .nav 둘 다 지원) */
+.site-nav a,
 .nav a {
-    color: #ddd;
-    text-decoration: none;
-    font-size: 14px;
+  color: #ccc;
+  margin-left: 10px;
+  text-decoration: none;
+  font-size: 0.9rem;
 }
 
-.nav a:hover {
-    color: #fff;
-}
-
-/* 현재 페이지 표시 */
+.site-nav a.current,
 .nav a.current {
-    color: #ffeb3b;     /* 강조색 */
-    font-weight: bold;
-    border-bottom: 2px solid #ffeb3b;
+  color: #fff;
+  font-weight: bold;
+  text-decoration: underline;
 }
 
-
-.main {
-    max-width: 960px;
-    margin: 32px auto;
-    padding: 0 16px 40px;
-}
-
-/* 푸터 */
+/* 푸터 (.site-footer / .footer 둘 다 지원) */
+.site-footer,
 .footer {
-    border-top: 1px solid #ddd;
-    padding: 12px 16px;
-    text-align: center;
-    font-size: 12px;
-    color: #777;
-    background: #fafafa;
+  background: #222;
+  color: #fff;
+  padding: 10px 16px;
+  display: flex;
+  justify-content: center;
+  font-size: 0.8rem;
 }
 
-/* 메인 페이지 전용 */
+/* =============================
+   공통 main 레이아웃 (index.html, game.html)
+============================= */
+.main {
+  /* header, footer 사이 공간 안에서 중앙 배치 */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;   /* 수직 중앙 */
+  align-items: center;       /* 수평 중앙 */
+  padding: 16px;
+  padding-bottom: 40px;      /* 푸터와의 여백 */
+}
+
+/* 공통 버튼 기본 (필요 시) */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background: #e0e0e0;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.btn-primary {
+  background: #1976d2;
+  border-color: #1976d2;
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background: #1565c0;
+}
+
+/* =============================
+   index.html - Hero 영역 + 메뉴 버튼
+============================= */
 .hero {
-    text-align: center;
-    margin-bottom: 32px;
+  text-align: center;
+  margin-bottom: 30px;
 }
 
 .hero-title {
-    font-size: 40px;
-    margin-bottom: 8px;
+  font-size: 2.4rem;
+  margin-bottom: 8px;
 }
 
 .hero-subtitle {
-    font-size: 14px;
-    color: #666;
+  font-size: 0.95rem;
+  color: #555;
 }
 
+/* 메인 메뉴 버튼 그리드 */
 .menu-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(140px, 1fr));
-    gap: 16px;
-    max-width: 480px;
-    margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(180px, 1fr));
+  gap: 24px;
+  max-width: 500px;
+  margin: 20px auto 0 auto;  /* 타이틀 아래 적당한 간격, 중앙 배치 */
 }
 
+/* 메인 메뉴 버튼 디자인 (다른 페이지와 통일된 파란색) */
 .menu-button {
-    padding: 16px;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    background: #fff;
-    cursor: pointer;
-    font-size: 16px;
-    font-weight: bold;
-    transition: background 0.2s, transform 0.1s;
-    text-decoration: none;
-    color: #333;
-    text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem 1.2rem;
+  border-radius: 8px;
+  border: 1px solid #1976d2;
+  background: #1976d2;
+  color: white;
+  font-size: 1.05rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.15s ease-in-out;
 }
 
 .menu-button:hover {
-    background: #ffe082;
-    transform: translateY(-1px);
+  background: #1565c0;
+  border-color: #1565c0;
 }
 
-/* 게임 페이지 전용 */
+/* =============================
+   game.html 전용 레이아웃
+============================= */
 .game-layout {
-    display: grid;
-    grid-template-columns: minmax(0, 2fr) minmax(220px, 1fr);
-    gap: 24px;
-    align-items: flex-start;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .game-panel {
-    background: #fff;
-    border-radius: 8px;
-    padding: 16px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+  background: #fff;
+  border-radius: 8px;
+  padding: 16px 16px 20px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+  text-align: center;
 }
 
 .game-panel h2 {
-    font-size: 18px;
-    margin-bottom: 12px;
+  font-size: 18px;
+  margin-bottom: 12px;
 }
 
 .game-board-wrapper {
-    display: flex;
-    justify-content: center;
-    margin-top: 8px;
+  display: flex;
+  justify-content: center;
 }
 
+/* 게임 보드 캔버스 (밝은 배경) */
 #game-board {
-    background: #000;
-    display: block;
-    border-radius: 4px;
+  background: #fafafa;
+  border: 1px solid #ccc;
+  display: block;
 }
 
-/* 버튼 / 점수 */
 .game-controls {
-    display: flex;
-    gap: 8px;
-    margin-top: 12px;
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
 }
 
 .game-controls button {
-    flex: 1;
-    padding: 8px 0;
-    border-radius: 4px;
-    border: none;
-    cursor: pointer;
-    background: #1976d2;
-    color: #fff;
-    font-size: 14px;
+  flex: 1;
+  padding: 8px 0;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  background: #1976d2;
+  color: #fff;
+  font-size: 14px;
 }
 
 .game-controls button:hover {
-    background: #1565c0;
+  background: #1565c0;
 }
 
 .game-score {
-    margin-top: 12px;
-    font-size: 14px;
+  margin-top: 10px;
+  font-size: 14px;
 }
 
-/* 게임 설명 / 조작 안내 */
-.info-panel {
-    background: #fff;
-    border-radius: 8px;
-    padding: 16px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.12);
-    font-size: 14px;
+/* =============================
+   rules.html (설명 페이지)
+============================= */
+.layout-rules {
+  min-height: 0;  /* main이 flex:1이라 여기서 vh 계산 안 써도 됨 */
+  display: grid;
+  grid-template-columns: 220px 1fr;
 }
 
-.info-panel h3 {
-    font-size: 16px;
-    margin-bottom: 8px;
+/* 왼쪽 룰 선택 메뉴 */
+.rules-menu {
+  background: #e0e0e0;
+  padding: 16px;
+  border-right: 1px solid #ccc;
 }
 
-.info-panel ul {
-    margin-left: 16px;
-    margin-top: 4px;
-    line-height: 1.5;
+.rules-menu h2 {
+  margin-top: 0;
+  font-size: 1rem;
 }
 
-/* 반응형 */
-@media (max-width: 768px) {
-    .game-layout {
-        grid-template-columns: 1fr;
-    }
+.rules-menu button {
+  width: 100%;
+  margin-bottom: 8px;
+  padding: 8px;
+  border: none;
+  background: #fff;
+  cursor: pointer;
+  text-align: left;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.rules-menu button.active {
+  background: #1976d2;
+  color: #fff;
+}
+
+/* 오른쪽 내용 영역 */
+.rules-content {
+  padding: 20px;
+  background: #fafafa;
+}
+
+.rules-content h2 {
+  margin-top: 0;
+}
+
+/* =============================
+   achievements.html (업적 페이지)
+============================= */
+.layout-achievements {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+}
+
+.achievements-header {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-bottom: 12px;
+  font-size: 0.9rem;
+}
+
+.achievements-header label {
+  margin-right: 8px;
+}
+
+.achievements-header select {
+  padding: 4px 8px;
+}
+
+.achievements-main {
+  flex: 1;
+  display: grid;
+  grid-template-rows: 1fr 180px;
+  gap: 12px;
+}
+
+.achievement-list {
+  background: #fff;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  overflow-y: auto;
+}
+
+.achievement-item {
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: #f5f5f5;
+  padding: 8px;
+  margin-bottom: 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+}
+
+.achievement-item[data-status="done"] {
+  border-left: 4px solid #4caf50;
+}
+
+.achievement-item[data-status="todo"] {
+  border-left: 4px solid #9e9e9e;
+}
+
+.achievement-item span.badge {
+  font-size: 0.75rem;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: #e0e0e0;
+}
+
+.achievement-item.done span.badge {
+  background: #4caf50;
+  color: #fff;
+}
+
+.achievement-item.active {
+  outline: 2px solid #1976d2;
+  background: #e3f2fd;
+}
+
+.achievement-detail {
+  background: #fff;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  font-size: 0.9rem;
+}
+
+.achievement-detail h2 {
+  margin-top: 0;
+}
+
+/* =============================
+   ranking.html (랭킹 페이지)
+============================= */
+.layout-ranking {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+}
+
+.ranking-controls {
+  margin-bottom: 10px;
+  display: flex;
+  gap: 8px;
+}
+
+.ranking-controls button {
+  padding: 6px 12px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  cursor: pointer;
+  background: #e0e0e0;
+  font-size: 0.9rem;
+}
+
+.ranking-controls button.active {
+  background: #1976d2;
+  color: #fff;
+  border-color: #1976d2;
+}
+
+.ranking-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.my-status {
+  background: #fff;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  font-size: 0.9rem;
+  display: flex;
+  justify-content: space-between;
+}
+
+.my-status span.value {
+  font-weight: bold;
+}
+
+.ranking-content {
+  flex: 1;
+  background: #fff;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+}
+
+.ranking-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.ranking-list li {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.ranking-list li:last-child {
+  border-bottom: none;
 }
