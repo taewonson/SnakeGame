@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>Snake - 게임 설명</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    /* 페이지 전용 최소 스타일 (styles.css에 옮겨도 됨) */
+    body {
+      margin: 0;
+      font-family: system-ui, sans-serif;
+      background: #f5f5f5;
+    }
+    .site-header, .site-footer {
+      background: #222;
+      color: #fff;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .site-header .logo a {
+      color: #fff;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 1.2rem;
+    }
+    .site-nav a {
+      color: #ccc;
+      margin-left: 10px;
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .site-nav a.active {
+      color: #fff;
+      font-weight: bold;
+      text-decoration: underline;
+    }
+    .site-footer {
+      font-size: 0.8rem;
+      justify-content: center;
+    }
+
+    main.layout-rules {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      min-height: calc(100vh - 100px); /* header+footer 제외 */
+    }
+
+    .rules-menu {
+      background: #e0e0e0;
+      padding: 16px;
+      box-sizing: border-box;
+      border-right: 1px solid #ccc;
+    }
+    .rules-menu h2 {
+      margin-top: 0;
+      font-size: 1rem;
+    }
+    .rules-menu button {
+      width: 100%;
+      margin-bottom: 8px;
+      padding: 8px;
+      border: none;
+      background: #fff;
+      cursor: pointer;
+      text-align: left;
+      border-radius: 4px;
+    }
+    .rules-menu button.active {
+      background: #1976d2;
+      color: #fff;
+    }
+
+    .rules-content {
+      padding: 20px;
+      box-sizing: border-box;
+      background: #fafafa;
+    }
+    .rules-content h2 {
+      margin-top: 0;
+    }
+    .rules-content p {
+      line-height: 1.5;
+      margin: 0 0 8px 0;
+    }
+  </style>
+</head>
+<body>
+<header class="site-header">
+  <div class="logo"><a href="main.html">SNAKE</a></div>
+  <nav class="site-nav">
+    <a href="main.html">메인</a>
+    <a href="game.html">게임</a>
+    <a href="rules.html" class="active">설명</a>
+    <a href="achievements.html">업적</a>
+    <a href="ranking.html">랭킹</a>
+  </nav>
+</header>
+
+<main class="layout-rules">
+  <!-- 룰 메뉴(왼쪽) -->
+  <aside class="rules-menu">
+    <h2>룰 선택</h2>
+    <button data-rule="basic" class="active">기본 규칙</button>
+    <button data-rule="expert">익스퍼트 모드</button>
+    <button data-rule="meta">랭킹 · 업적 시스템</button>
+  </aside>
+
+  <!-- 룰 내용(오른쪽) -->
+  <section class="rules-content">
+    <h2 id="rule-title">기본 규칙</h2>
+    <div id="rule-body">
+      <p>여기에 스네이크 게임의 기본 조작 방법, 충돌 조건, 점수 계산 방식 등을 설명합니다.</p>
+      <p>예: 방향키로 뱀의 이동 방향을 조정하고, 벽 또는 자신의 몸과 부딪히면 게임이 종료됩니다.</p>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  Credit
+</footer>
+
+<script>
+  const ruleData = {
+    basic: {
+      title: "기본 규칙",
+      body: [
+        "여기에 스네이크 게임의 기본 조작 방법, 충돌 조건, 점수 계산 방식 등을 정리합니다.",
+        "예: 방향키로 조작, 사과를 먹으면 길이 증가, 벽/자기 몸과 충돌 시 게임오버."
+      ]
+    },
+    expert: {
+      title: "익스퍼트 모드 규칙",
+      body: [
+        "장애물, 아이템, 속도 증가 등 추가 규칙을 설명하는 영역입니다.",
+        "예: 일정 점수마다 속도가 빨라지고, 특정 아이템을 먹으면 일시 무적/감속 등의 효과가 발생."
+      ]
+    },
+    meta: {
+      title: "랭킹 · 업적 시스템",
+      body: [
+        "점수 저장 방식, 랭킹 산정 기준, 업적 달성 조건 등을 설명합니다.",
+        "예: 최고 점수는 로컬 저장, 랭킹은 상위 N개의 점수 기준, 업적은 특정 점수/조건 달성 시 해금."
+      ]
+    }
+  };
+
+  const buttons = document.querySelectorAll(".rules-menu button");
+  const titleEl = document.getElementById("rule-title");
+  const bodyEl = document.getElementById("rule-body");
+
+  buttons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      buttons.forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+
+      const key = btn.dataset.rule;
+      const data = ruleData[key];
+
+      titleEl.textContent = data.title;
+      bodyEl.innerHTML = data.body
+        .map(line => `<p>${line}</p>`)
+        .join("");
+    });
+  });
+</script>
+</body>
+</html>

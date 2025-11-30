@@ -1,0 +1,112 @@
+<!-- game.html -->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>Snake Game</title>
+  <link rel="stylesheet" href="styles.css">
+
+  <style>
+    /* 이 페이지 전용 레이아웃: 가운데에 게임만 */
+    .game-layout {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .game-panel {
+      background: #fff;
+      border-radius: 8px;
+      padding: 16px 16px 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+      text-align: center;
+    }
+
+    .game-panel h2 {
+      font-size: 18px;
+      margin-bottom: 12px;
+    }
+
+    .game-board-wrapper {
+      display: flex;
+      justify-content: center;
+    }
+
+    /* 100x100용 600x600 캔버스, 밝은 배경 */
+    #game-board {
+      background: #fafafa;
+      border: 1px solid #ccc;
+      display: block;
+    }
+
+    .game-controls {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .game-controls button {
+      flex: 1;
+      padding: 8px 0;
+      border-radius: 4px;
+      border: none;
+      cursor: pointer;
+      background: #1976d2;
+      color: #fff;
+      font-size: 14px;
+    }
+
+    .game-controls button:hover {
+      background: #1565c0;
+    }
+
+    .game-score {
+      margin-top: 10px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- header -->
+  <header class="header">
+    <div class="header-title">SNAKE</div>
+    <nav class="nav">
+      <a href="main.html">홈</a>
+      <a href="game.html" class="current">게임</a>
+      <a href="rule.html">게임 설명</a>
+      <a href="achievement.html">업적</a>
+      <a href="ranking.html">랭킹</a>
+    </nav>
+  </header>
+
+  <!-- main -->
+  <main class="main">
+    <div class="game-layout">
+      <section class="game-panel">
+        <h2>게임 화면</h2>
+
+        <div class="game-board-wrapper">
+          <!-- 100x100 그리드용 600x600 캔버스 -->
+          <canvas id="game-board" width="600" height="600"></canvas>
+        </div>
+
+        <div class="game-controls">
+          <button id="start-btn">시작</button>
+          <button id="stop-btn">정지</button>
+        </div>
+
+        <div class="game-score">
+          점수: <span id="score">0</span>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- footer -->
+  <footer class="footer">credit</footer>
+
+  <!-- 게임 로직 -->
+  <script src="script.js"></script>
+</body>
+</html>

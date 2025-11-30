@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>Snake - 랭킹</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, sans-serif;
+      background: #f5f5f5;
+    }
+    .site-header, .site-footer {
+      background: #222;
+      color: #fff;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .site-header .logo a {
+      color: #fff;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 1.2rem;
+    }
+    .site-nav a {
+      color: #ccc;
+      margin-left: 10px;
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .site-nav a.active {
+      color: #fff;
+      font-weight: bold;
+      text-decoration: underline;
+    }
+    .site-footer {
+      font-size: 0.8rem;
+      justify-content: center;
+    }
+
+    main.layout-ranking {
+      display: flex;
+      flex-direction: column;
+      min-height: calc(100vh - 100px);
+      box-sizing: border-box;
+      padding: 16px;
+    }
+
+    .ranking-controls {
+      margin-bottom: 10px;
+      display: flex;
+      gap: 8px;
+    }
+    .ranking-controls button {
+      padding: 6px 12px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      cursor: pointer;
+      background: #e0e0e0;
+      font-size: 0.9rem;
+    }
+    .ranking-controls button.active {
+      background: #1976d2;
+      color: #fff;
+      border-color: #1976d2;
+    }
+
+    .ranking-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .my-status {
+      background: #fff;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #ddd;
+      font-size: 0.9rem;
+      display: flex;
+      justify-content: space-between;
+    }
+    .my-status span.value {
+      font-weight: bold;
+    }
+
+    .ranking-content {
+      flex: 1;
+      background: #fff;
+      padding: 12px;
+      border-radius: 6px;
+      border: 1px solid #ddd;
+      box-sizing: border-box;
+      font-size: 0.9rem;
+    }
+
+    .ranking-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+    .ranking-list li {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      border-bottom: 1px solid #eee;
+    }
+    .ranking-list li:last-child {
+      border-bottom: none;
+    }
+  </style>
+</head>
+<body>
+<header class="site-header">
+  <div class="logo"><a href="main.html">SNAKE</a></div>
+  <nav class="site-nav">
+    <a href="main.html">메인</a>
+    <a href="game.html">게임</a>
+    <a href="rules.html">설명</a>
+    <a href="achievements.html">업적</a>
+    <a href="ranking.html" class="active">랭킹</a>
+  </nav>
+</header>
+
+<main class="layout-ranking">
+  <!-- 상단 조작 영역 -->
+  <section class="ranking-controls">
+    <button data-view="history" class="active">기록 히스토리</button>
+    <button data-view="global">전체 랭킹</button>
+  </section>
+
+  <section class="ranking-main">
+    <!-- 내 상태 -->
+    <div class="my-status">
+      <div>내 최고 점수: <span id="best-score" class="value">0</span></div>
+      <div>내 랭킹: <span id="my-rank" class="value">-</span></div>
+    </div>
+
+    <!-- 리스트 영역 -->
+    <div class="ranking-content">
+      <!-- 히스토리 뷰 -->
+      <div id="view-history">
+        <h2>기록 히스토리</h2>
+        <ul class="ranking-list" id="history-list">
+          <li><span>1회차</span><span>점수 5</span></li>
+          <li><span>2회차</span><span>점수 8</span></li>
+          <li><span>3회차</span><span>점수 12</span></li>
+        </ul>
+      </div>
+
+      <!-- 전체 랭킹 뷰 -->
+      <div id="view-global" style="display:none;">
+        <h2>전체 랭킹</h2>
+        <ul class="ranking-list" id="global-list">
+          <li><span>1위</span><span>점수 30</span></li>
+          <li><span>2위</span><span>점수 25</span></li>
+          <li><span>3위</span><span>점수 20</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  Credit
+</footer>
+
+<script>
+  const ctrlButtons = document.querySelectorAll(".ranking-controls button");
+  const viewHistory = document.getElementById("view-history");
+  const viewGlobal = document.getElementById("view-global");
+
+  ctrlButtons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      ctrlButtons.forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+
+      const view = btn.dataset.view;
+      if (view === "history") {
+        viewHistory.style.display = "";
+        viewGlobal.style.display = "none";
+      } else {
+        viewHistory.style.display = "none";
+        viewGlobal.style.display = "";
+      }
+    });
+  });
+
+  // 나중에 실제 게임과 연동 시 여기에 최고 점수/랭킹을 업데이트하면 됨
+  // 예시로 임시 값 설정:
+  document.getElementById("best-score").textContent = "12";
+  document.getElementById("my-rank").textContent = "5위";
+</script>
+</body>
+</html>
