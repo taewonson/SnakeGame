@@ -6,73 +6,149 @@
   <link rel="stylesheet" href="styles.css">
 
   <style>
-    /* 이 페이지 전용 레이아웃: 가운데에 게임만 */
+    /* 이 페이지 전용 레이아웃 */
+
     .game-layout {
       display: flex;
       justify-content: center;
-      align-items: center;
+      align-items: flex-start;
+      gap: 24px;
+      padding: 24px 0;
     }
 
-    .game-panel {
-      background: #fff;
+    .game-side {
+      width: 230px;
+      min-height: 620px;
+      box-sizing: border-box;
+      border: 1px solid #ddd;
       border-radius: 8px;
-      padding: 16px 16px 20px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.12);
-      text-align: center;
+      padding: 16px;
+      background: #fafafa;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
     }
 
-    .game-panel h2 {
+    .game-side h2 {
       font-size: 18px;
-      margin-bottom: 12px;
+      margin: 0 0 8px;
+    }
+
+    .status-line {
+      font-size: 14px;
+      margin: 4px 0;
+    }
+
+    .status-line span {
+      font-weight: bold;
+    }
+
+    .game-hint {
+      margin-top: 12px;
+      font-size: 13px;
+      color: #555;
+      line-height: 1.4;
+    }
+
+    .game-center {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
     }
 
     .game-board-wrapper {
-      display: flex;
-      justify-content: center;
+      box-shadow: 0 0 8px rgba(0,0,0,0.15);
+      border-radius: 8px;
+      overflow: hidden;
     }
 
-    /* 100x100용 600x600 캔버스, 밝은 배경 */
     #game-board {
-      background: #fafafa;
-      border: 1px solid #ccc;
       display: block;
+      background: #f5f5f5;
     }
 
-    .game-controls {
+    .game-help-text {
+      font-size: 14px;
+      color: #444;
+      text-align: center;
+    }
+
+    .mode-select,
+    .difficulty-select,
+    .game-buttons {
+      margin-top: 8px;
+    }
+
+    .mode-select label,
+    .difficulty-select label {
+      display: block;
+      font-size: 14px;
+      margin: 4px 0;
+      cursor: pointer;
+    }
+
+    .game-buttons {
+      margin-top: 16px;
       display: flex;
       gap: 8px;
-      margin-top: 12px;
     }
 
-    .game-controls button {
+    .game-buttons button {
       flex: 1;
       padding: 8px 0;
-      border-radius: 4px;
+      border-radius: 6px;
       border: none;
-      cursor: pointer;
-      background: #1976d2;
+      background: #4caf50;
       color: #fff;
-      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
     }
 
-    .game-controls button:hover {
-      background: #1565c0;
+    .game-buttons button#stop-btn {
+      background: #f44336;
     }
 
-    .game-score {
-      margin-top: 10px;
-      font-size: 14px;
+    .game-buttons button:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+
+    .difficulty-disabled label {
+      color: #aaa;
+    }
+
+    /* 필요하면 토스트용 */
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.7);
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: 16px;
+      font-size: 13px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+      z-index: 999;
+    }
+
+    .toast.show {
+      opacity: 1;
     }
   </style>
 </head>
 <body>
 
-  <!-- header -->
+  <!-- header: 공통 헤더 -->
   <header class="site-header">
-    <div class="logo"><a href="index.html">SNAKE</a></div>
+    <div class="logo">
+      <a href="index.html">SNAKE</a>
+    </div>
     <nav class="site-nav">
-      <a href="index.html">홈</a>
-      <a href="game.html" class="current">게임</a>
+      <a href="game.html">게임 시작</a>
       <a href="rules.html">게임 설명</a>
       <a href="achievements.html">업적</a>
       <a href="ranking.html">랭킹</a>
@@ -82,30 +158,207 @@
   <!-- main -->
   <main class="main">
     <div class="game-layout">
-      <section class="game-panel">
-        <h2>방향키를 누르면 게임이 시작되며, ESC 키로 일시정지/재개할 수 있습니다.</h2>
 
-        <div class="game-board-wrapper">
-          <!-- 100x100 그리드용 600x600 캔버스 -->
-          <canvas id="game-board" width="600" height="600"></canvas>
+      <!-- 왼쪽: 정보 / 점수 -->
+      <aside class="game-side">
+        <h2>게임 정보</h2>
+
+        <div class="status-line">
+          모드: <span id="mode-label">Classic</span>
         </div>
-
-        <div class="game-controls">
-          <button id="start-btn">시작</button>
-          <button id="stop-btn">정지</button>
+        <div class="status-line">
+          난이도: <span id="difficulty-label">-</span>
         </div>
-
-        <div class="game-score">
+        <div class="status-line">
           점수: <span id="score">0</span>
         </div>
+
+        <div class="game-hint">
+          · 방향키를 눌러 게임을 시작할 수 있습니다.<br>
+          · ESC 키로 일시정지 / 재개가 가능합니다.<br>
+          · Classic 모드는 장애물/아이템 없이 기본 규칙으로 진행됩니다.<br>
+          · Expert 모드에서 난이도(Easy/Normal/Hard)를 설정해 보세요.
+        </div>
+      </aside>
+
+      <!-- 가운데: 캔버스 -->
+      <section class="game-center">
+        <div class="game-board-wrapper">
+          <canvas id="game-board" width="600" height="600"></canvas>
+        </div>
+        <p class="game-help-text">
+          방향키로 조작 · ESC로 일시정지 / 재개 · Start 버튼으로 새 게임 시작 · Stop 버튼으로 강제 종료
+        </p>
       </section>
+
+      <!-- 오른쪽: 모드/난이도/버튼 -->
+      <aside class="game-side">
+        <div class="mode-select">
+          <h2>게임 모드</h2>
+          <label>
+            <input type="radio" name="mode" value="classic" checked>
+            Classic
+          </label>
+          <label>
+            <input type="radio" name="mode" value="expert">
+            Expert
+          </label>
+        </div>
+
+        <div id="difficulty-box" class="difficulty-select">
+          <h2>난이도 (Expert 전용)</h2>
+          <label>
+            <input type="radio" name="difficulty" value="easy">
+            Easy
+          </label>
+          <label>
+            <input type="radio" name="difficulty" value="normal" checked>
+            Normal
+          </label>
+          <label>
+            <input type="radio" name="difficulty" value="hard">
+            Hard
+          </label>
+        </div>
+
+        <div class="game-buttons">
+          <button id="start-btn">Start</button>
+          <button id="stop-btn">Stop</button>
+        </div>
+      </aside>
     </div>
   </main>
 
   <!-- footer -->
-  <footer class="site-footer">Made by taewonson</footer>
+  <footer class="site-footer">
+    Made by taewonson
+  </footer>
+
+  <div id="toast" class="toast"></div>
 
   <!-- 게임 로직 -->
-  <script src="script.js"></script>
+  <script src="classic_script.js"></script>
+  <script src="expert_script.js"></script>
+
+  <script>
+    (function () {
+      const canvas = document.getElementById('game-board');
+      const startBtn = document.getElementById('start-btn');
+      const stopBtn = document.getElementById('stop-btn');
+      const scoreEl = document.getElementById('score');
+      const modeLabel = document.getElementById('mode-label');
+      const diffLabel = document.getElementById('difficulty-label');
+
+      const modeRadios = document.querySelectorAll('input[name="mode"]');
+      const diffRadios = document.querySelectorAll('input[name="difficulty"]');
+      const diffBox = document.getElementById('difficulty-box');
+
+      const toastEl = document.getElementById('toast');
+
+      function showToast(msg) {
+        if (!toastEl) return;
+        toastEl.textContent = msg;
+        toastEl.classList.add('show');
+        setTimeout(() => {
+          toastEl.classList.remove('show');
+        }, 1500);
+      }
+
+      // 난이도 활성/비활성
+      function setDifficultyEnabled(enabled) {
+        diffRadios.forEach(r => {
+          r.disabled = !enabled;
+        });
+        if (enabled) {
+          diffBox.classList.remove('difficulty-disabled');
+        } else {
+          diffBox.classList.add('difficulty-disabled');
+        }
+      }
+
+      function updateDifficultyLabelFromRadios() {
+        const checked = Array.from(diffRadios).find(r => r.checked);
+        if (!checked) {
+          diffLabel.textContent = '-';
+        } else {
+          const val = checked.value;
+          const text =
+            val === 'easy' ? 'Easy' :
+            val === 'hard' ? 'Hard' : 'Normal';
+          diffLabel.textContent = text;
+        }
+      }
+
+      let currentMode = 'classic';
+      let currentGame = null;
+
+      function initMode(mode) {
+        // 기존 게임 정리
+        if (currentGame && typeof currentGame.destroy === 'function') {
+          currentGame.destroy();
+        }
+
+        currentMode = mode;
+        const impl = window.SnakeGames && window.SnakeGames[mode];
+        if (!impl || typeof impl.init !== 'function') {
+          console.error('게임 모드 초기화 실패:', mode);
+          return;
+        }
+        currentGame = impl;
+
+        if (mode === 'classic') {
+          modeLabel.textContent = 'Classic';
+          diffLabel.textContent = '-';
+          setDifficultyEnabled(false);
+        } else {
+          modeLabel.textContent = 'Expert';
+          setDifficultyEnabled(true);
+          updateDifficultyLabelFromRadios();
+        }
+
+        impl.init({
+          canvas,
+          startBtn,
+          stopBtn,
+          scoreEl,
+          modeEl: modeLabel,
+          diffEl: diffLabel,
+          diffRadios: diffRadios,
+          toast: showToast
+        });
+      }
+
+      // 모드 라디오 변경
+      modeRadios.forEach(r => {
+        r.addEventListener('change', (e) => {
+          if (!e.target.checked) return;
+          const mode = e.target.value; // classic / expert
+          initMode(mode);
+        });
+      });
+
+      // 난이도 라디오 변경 (Expert 모드에서만 의미 있음)
+      diffRadios.forEach(r => {
+        r.addEventListener('change', () => {
+          if (currentMode !== 'expert') {
+            // classic 모드에서 눌러도 무시 (UI만 체크는 바뀜)
+            return;
+          }
+          updateDifficultyLabelFromRadios();
+          if (currentGame && typeof currentGame.onDifficultyChanged === 'function') {
+            currentGame.onDifficultyChanged();
+          }
+        });
+      });
+
+      // 초기 모드: classic
+      window.addEventListener('DOMContentLoaded', () => {
+        // classic 선택 체크 보장
+        const defaultModeRadio = Array.from(modeRadios).find(r => r.value === 'classic');
+        if (defaultModeRadio) defaultModeRadio.checked = true;
+        initMode('classic');
+      });
+    })();
+  </script>
 </body>
 </html>
