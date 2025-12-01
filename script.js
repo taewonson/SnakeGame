@@ -17,14 +17,16 @@ let headDx, headDy;
 
 let score = 0;
 let gameInterval = null;
+
+// 상태 플래그
 let isRunning = false;
 let isGameOver = false;
+let isPaused = false;
 
 // 한 칸 이동 속도(ms)
-// 이전: 100ms  →  지금: 120ms (게임 속도 더 느리게)
 const tickMs = 120;
 
-// ====== 헬퍼: 둥근 사각형 ======
+// ====== 헬퍼: 둥근 사각형 (머리/꼬리/사과용) ======
 function drawRoundedRect(x, y, w, h, r) {
   const radius = { tl: r.tl || 0, tr: r.tr || 0, br: r.br || 0, bl: r.bl || 0 };
 
@@ -47,6 +49,7 @@ function resetGame() {
   const startX = Math.floor(tileCount / 2);
   const startY = Math.floor(tileCount / 2);
 
+  // 처음에는 길이 1짜리 뱀
   snake = [{ x: startX, y: startY }];
 
   // 기본 방향: 오른쪽
@@ -62,6 +65,7 @@ function resetGame() {
 
   isRunning = false;
   isGameOver = false;
+  isPaused  = false;
 
   placeApple();
   draw();
@@ -72,6 +76,7 @@ function placeApple() {
     const x = Math.floor(Math.random() * tileCount);
     const y = Math.floor(Math.random() * tileCount);
 
+    // 뱀 몸통 위에는 생성되지 않도록
     if (!snake.some(seg => seg.x === x && seg.y === y)) {
       apple = { x, y };
       break;
@@ -81,21 +86,65 @@ function placeApple() {
 
 // ====== 방향 전환 (정반대 금지, 머리는 즉시 회전) ======
 function setDirection(dx, dy) {
-  // 현재 이동 방향 기준으로 180도 회전은 막기
+  // 현재 이동 방향 기준 180도 회전 막기
   if (dx === -vx && dy === -vy) return;
 
   // 실제 이동 방향은 다음 틱에 적용
   nextVx = dx;
   nextVy = dy;
 
-  // 머리는 바로 회전해서 표시 (입력 반응 빠르게 보이도록)
+  // 머리는 입력에 즉시 반응
   headDx = dx;
   headDy = dy;
 }
 
+// ====== 루프 제어 ======
+function beginLoop() {
+  if (gameInterval) clearInterval(gameInterval);
+  gameInterval = setInterval(tick, tickMs);
+  isRunning = true;
+  isPaused  = false;
+}
+
+function startNewGame() {
+  resetGame();
+  beginLoop();
+}
+
+function pauseGame() {
+  if (!isRunning) return;
+  clearInterval(gameInterval);
+  gameInterval = null;
+  isRunning = false;
+  isPaused  = true;
+  draw(); // 일시정지 오버레이 그리기
+}
+
+function resumeGame() {
+  if (isRunning || isGameOver) return;
+  beginLoop();
+}
+
+function stopGame() {
+  clearInterval(gameInterval);
+  gameInterval = null;
+  isRunning = false;
+  isPaused  = false;
+  draw();
+}
+
+function endGame() {
+  clearInterval(gameInterval);
+  gameInterval = null;
+  isRunning = false;
+  isPaused  = false;
+  isGameOver = true;
+  draw();
+}
+
 // ====== 틱 처리 ======
 function tick() {
-  if (isGameOver) return;
+  if (isGameOver || isPaused) return;
 
   // 이번 틱에서 실제 이동 방향 갱신
   vx = nextVx;
@@ -160,25 +209,22 @@ function draw() {
   // ------- 뱀 -------
   for (let i = 0; i < snake.length; i++) {
     const seg = snake[i];
-
     const px = seg.x * tileSize;
     const py = seg.y * tileSize;
 
     if (i === 0) {
-      // ===== 머리 (둥근 방향 + 눈 + 눈동자) =====
+      // ===== 머리: 진행 방향 쪽만 둥글게 + 눈 =====
       ctx.fillStyle = "#388e3c";
 
-      // 머리 방향은 headDx/headDy 기준 (입력에 즉시 반응)
       let r = { tl: 0, tr: 0, br: 0, bl: 0 };
-      if (headDx > 0) r = { tl: 0, tr: 8, br: 8, bl: 0 };
-      else if (headDx < 0) r = { tl: 8, tr: 0, br: 0, bl: 8 };
-      else if (headDy < 0) r = { tl: 8, tr: 8, br: 0, bl: 0 };
-      else if (headDy > 0) r = { tl: 0, tr: 0, br: 8, bl: 8 };
+      if (headDx > 0)        r = { tl: 0, tr: 8, br: 8, bl: 0 };      // 오른쪽
+      else if (headDx < 0)   r = { tl: 8, tr: 0, br: 0, bl: 8 };      // 왼쪽
+      else if (headDy < 0)   r = { tl: 8, tr: 8, br: 0, bl: 0 };      // 위
+      else if (headDy > 0)   r = { tl: 0, tr: 0, br: 8, bl: 8 };      // 아래
 
       drawRoundedRect(px, py, tileSize, tileSize, r);
 
-      // 눈 + 눈동자
-      const eyeSize = tileSize / 4;
+      const eyeSize   = tileSize / 4;
       const pupilSize = eyeSize / 2;
 
       let eye1 = { x: 0, y: 0 };
@@ -202,8 +248,8 @@ function draw() {
         eye1.y = py + 3;
         eye2.x = px + tileSize / 1.6;
         eye2.y = py + 3;
-      } else if (headDy > 0) {
-        // 아래
+      } else {
+        // 아래 (또는 초기)
         eye1.x = px + tileSize / 4;
         eye1.y = py + tileSize - eyeSize - 3;
         eye2.x = px + tileSize / 1.6;
@@ -229,31 +275,50 @@ function draw() {
         pupilSize,
         pupilSize
       );
-    }
-
-    else if (i === snake.length - 1) {
-      // ===== 꼬리 (진행 반대쪽만 둥글게) =====
+    } else if (i === snake.length - 1) {
+      // ===== 꼬리: 진행 반대쪽만 둥글게 =====
       ctx.fillStyle = "#43A047";
 
       const prev = snake[i - 1];
       let r = { tl: 0, tr: 0, br: 0, bl: 0 };
 
-      if (prev.x > seg.x) r = { tl: 8, tr: 0, br: 0, bl: 8 };
-      else if (prev.x < seg.x) r = { tl: 0, tr: 8, br: 8, bl: 0 };
-      else if (prev.y > seg.y) r = { tl: 8, tr: 8, br: 0, bl: 0 };
-      else if (prev.y < seg.y) r = { tl: 0, tr: 0, br: 8, bl: 8 };
+      if (prev.x > seg.x)        r = { tl: 8, tr: 0, br: 0, bl: 8 };  // ← 쪽이 외곽
+      else if (prev.x < seg.x)   r = { tl: 0, tr: 8, br: 8, bl: 0 };  // → 쪽이 외곽
+      else if (prev.y > seg.y)   r = { tl: 8, tr: 8, br: 0, bl: 0 };  // ↑ 쪽이 외곽
+      else if (prev.y < seg.y)   r = { tl: 0, tr: 0, br: 8, bl: 8 };  // ↓ 쪽이 외곽
 
       drawRoundedRect(px, py, tileSize, tileSize, r);
-    }
-
-    else {
+    } else {
       // ===== 몸통: 네모 =====
       ctx.fillStyle = "#43A047";
       ctx.fillRect(px, py, tileSize, tileSize);
     }
   }
 
-  // 게임오버 표시
+  // ------- 캔버스 안 좌상단에 현재 점수 표시 -------
+  ctx.fillStyle = "#333";
+  ctx.font = "14px Arial";
+  ctx.textAlign = "left";
+  ctx.textBaseline = "top";
+  ctx.fillText(`점수: ${score}`, 8, 8);
+
+  // ------- 일시정지 오버레이 -------
+  if (isPaused && !isGameOver) {
+    ctx.fillStyle = "rgba(0,0,0,0.5)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = "#fff";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+
+    ctx.font = "32px Arial";
+    ctx.fillText("일시정지", canvas.width / 2, canvas.height / 2 - 10);
+
+    ctx.font = "18px Arial";
+    ctx.fillText(`현재 점수: ${score}`, canvas.width / 2, canvas.height / 2 + 20);
+  }
+
+  // ------- 게임오버 오버레이 -------
   if (isGameOver) {
     ctx.fillStyle = "rgba(0,0,0,0.6)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -277,54 +342,67 @@ function draw() {
   }
 }
 
-// ====== 게임 제어 ======
-function startGame() {
-  if (isRunning) return;
-  if (isGameOver) resetGame();
-
-  isRunning = true;
-  gameInterval = setInterval(tick, tickMs);
-}
-
-function stopGame() {
-  isRunning = false;
-  clearInterval(gameInterval);
-}
-
-function endGame() {
-  isRunning = false;
-  isGameOver = true;
-  clearInterval(gameInterval);
-  draw();
-}
-
-// ====== 입력 ======
+// ====== 키보드 입력 ======
 window.addEventListener("keydown", (e) => {
   const key = e.key;
 
-  if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(key)) {
+  // 게임 중(또는 일시정지 중)에는 스페이스/화살표 등
+  // 모든 키의 기본 동작(스크롤 등)을 막는다.
+  if (isRunning || isPaused) {
     e.preventDefault();
   }
 
-  if (!isRunning && !isGameOver) {
-    startGame();
-  } else if (!isRunning && isGameOver) {
-    resetGame();
-    startGame();
+  const isArrow =
+    key === "ArrowUp" ||
+    key === "ArrowDown" ||
+    key === "ArrowLeft" ||
+    key === "ArrowRight";
+
+  // 방향키: 방향 전환 + 상태에 따라 시작/재시작/재개
+  if (isArrow) {
+    // 아직 게임 안 시작 or 게임오버 → 새 게임
+    if (isGameOver) {
+      startNewGame();
+    } else if (!isRunning && !isPaused) {
+      startNewGame();
+    } else if (!isRunning && isPaused) {
+      // 일시정지 상태 → 재개
+      resumeGame();
+    }
+
+    if (key === "ArrowUp") setDirection(0, -1);
+    if (key === "ArrowDown") setDirection(0, 1);
+    if (key === "ArrowLeft") setDirection(-1, 0);
+    if (key === "ArrowRight") setDirection(1, 0);
+
+    return;
   }
 
-  if (key === "ArrowUp") setDirection(0, -1);
-  if (key === "ArrowDown") setDirection(0, 1);
-  if (key === "ArrowLeft") setDirection(-1, 0);
-  if (key === "ArrowRight") setDirection(1, 0);
+  // ESC: 일시정지 / 재개
+  if (key === "Escape") {
+    if (isRunning) {
+      pauseGame();
+    } else if (isPaused) {
+      resumeGame();
+    }
+    e.preventDefault();
+  }
+
+  // 그 외 키는 게임 로직에선 사용 X
 });
 
+// ====== 버튼 이벤트 ======
 document.getElementById("start-btn").addEventListener("click", () => {
-  if (!isRunning && isGameOver) resetGame();
-  startGame();
+  if (isGameOver || (!isRunning && !isPaused)) {
+    startNewGame();
+  } else if (!isRunning && isPaused) {
+    resumeGame();
+  }
 });
 
-document.getElementById("stop-btn").addEventListener("click", stopGame);
+document.getElementById("stop-btn").addEventListener("click", () => {
+  stopGame();
+});
 
-// ====== 시작 ======
+// ====== 초기 호출 ======
 resetGame();
