@@ -1,4 +1,15 @@
 // expert_script.js
+// ========================================
+//  ▷ 모드: Expert
+//  - 장애물(패턴), 추적지뢰, 폭탄/특수폭탄, 길이 축소, 텔레포트, 차원이동 등
+//  - 사과 일정 개수마다 "위험요소 + 아이템" 이벤트 발생
+//  - ESC: 일시정지 / 재개
+//  - WARNING! 오버레이에 다음 위험요소 표시 (예: WARNING!(장애물))
+//  - HUD 텍스트(아이템/속도 변경 안내)는 WARNING 아래로 내려서 겹치지 않게 표시
+//  - 지뢰 → "추적지뢰"로 명칭 통일 (표시 텍스트 기준)
+//  - 뱀 외곽 윤곽선 추가 (가시성 향상)
+// ========================================
+
 (function (global) {
   const SnakeExpert = {
     init,
@@ -6,9 +17,13 @@
     onDifficultyChanged
   };
 
+  // 전역 네임스페이스에 등록
   global.SnakeGames = global.SnakeGames || {};
   global.SnakeGames.expert = SnakeExpert;
 
+  // -----------------------------
+  // 공용 DOM / 상태 변수
+  // -----------------------------
   let opt = {};
   let canvas, ctx;
   let startBtn, stopBtn, scoreEl, modeEl, diffEl, diffRadios;
@@ -17,10 +32,10 @@
   const tileCount = 25;
   let tileSize;
 
-  let snake = [];
-  let apple = null;
+  let snake = [];           // [0]이 머리
+  let apple = null;         // {x,y}
 
-  let vx = 1, vy = 0;
+  let vx = 1, vy = 0;       // 현재 이동 방향
   let nextVx = 1, nextVy = 0;
   let headDx = 1, headDy = 0;
 
@@ -28,60 +43,74 @@
   let isPaused = false;
   let isGameOver = false;
 
-  let baseTickMs = 120;
-  let currentTickMs = 120;
-  let gameLoopId = null;
+  let baseTickMs = 120;     // 기본 틱 간격
+  let currentTickMs = 120;  // 난이도/속도이벤트 반영 후 실제 간격
+  let gameLoopId = null;    // setInterval 핸들
 
   let difficulty = "normal"; // easy / normal / hard
   let speedMul = 1.0;        // 난이도 기본 속도 계수
 
-  let applesSinceEvent = 0;
+  let applesSinceEvent = 0;  // 마지막 이벤트 이후 먹은 사과 수
   let score = 0;
 
   // 속도 계수 (1.0=100%), 커질수록 "더 빠름"
   // 실제 틱 간격 = baseTickMs * speedMul / speedFactor
   let speedFactor = 1.0; // 0.8 ~ 1.2 (최소 80%, 최대 120%)
 
+  // 장애물 / 지뢰 / 아이템 / 특수 상태
   let obstacles = new Set();      // Set("x,y")
-  let previewObstacles = [];      // [{x,y}]
-  let mine = null;                // {x,y}
-  let mineTick = 0;
+  let previewObstacles = [];      // 이벤트 예고용 장애물 좌표 [{x,y}]
+  let mine = null;                // 추적지뢰 {x,y}
+  let mineTick = 0;               // 지뢰 이동 간격 제어용 카운터
 
-  let items = [];                 // [{type,x,y}]
-  let portalEdge = null;          // {axis: "horizontal"|"vertical", used}
-  let isPhasing = false;
-  let phaseExit = null;
+  let items = [];                 // [{type,x,y}]  type: "bomb","superbomb","shrink","teleport","phase"
+  let portalEdge = null;          // 텔레포트 엣지 {axis: "horizontal"|"vertical", used}
+  let isPhasing = false;          // 차원이동 상태 여부
+  let phaseExit = null;           // 차원이동 출구 {x,y}
 
-  let bombHighlights = [];        // [{x,y,ttl}]
-  let warningActive = false;
+  let bombHighlights = [];        // 폭탄 효과 영역 하이라이트 [{x,y,ttl}]
+  let warningActive = false;      // 다음 사과에 위험요소+아이템 이벤트 예정 여부
 
+  // WARNING 예정 정보
   let upcomingHazard = null;      // "obstacle" | "mine" | "speed"
   let upcomingItem = null;        // "bomb" | "superbomb" | "shrink" | "teleport" | "phase"
   let upcomingSpeedDelta = null;  // 예고된 속도 변화량 (±0.1, ±0.2)
 
   let keyHandler = null;
 
-  // HUD 메시지
+  // HUD 메시지 (아이템/속도 이벤트 안내)
   let hudMessage = "";
   let hudTimer = 0; // tick마다 감소
 
-  // 게임 오버 직후 재시작 방지용
+  // 게임 오버 직후 재시작 방지용(키 떼기 전에 연속 재시작 방지)
   let lastGameOverTime = 0;
+
+  // 이 모드에서 게임을 한 번이라도 시작했는지
+  let hasStarted = false;
+
+  // =========================
+  // HUD / 경고 관련 유틸
+  // =========================
 
   function showHUD(msg) {
     hudMessage = msg;
-    hudTimer = 30; // 짧게 표시
+    hudTimer = 30; // 짧게 표시 (틱 기준)
   }
 
-  // 현재 난이도에 따른 이벤트 간격
   function getSpawnInterval() {
+    // 현재 난이도에 따른 이벤트 간격(먹어야 하는 사과 수)
     if (difficulty === "easy") return 7;
     if (difficulty === "hard") return 3;
     return 5; // normal
   }
 
-  // ================= 초기화 / 파괴 =================
+  // =========================
+  // 초기화 / 파괴
+  // =========================
 
+  /**
+   * Expert 모드 초기화
+   */
   function init(options) {
     opt = options;
     canvas = opt.canvas;
@@ -97,9 +126,14 @@
     modeEl.textContent = "Expert";
     tileSize = canvas.width / tileCount;
 
+    // 모드 진입 시마다, 이 모드에선 아직 게임을 시작한 적 없는 상태로 리셋
+    hasStarted = false;
+
+    // 버튼 이벤트
     startBtn.addEventListener('click', onClickStart);
     stopBtn.addEventListener('click', onClickStop);
 
+    // 키 입력
     keyHandler = onKeyDown;
     document.addEventListener('keydown', keyHandler);
 
@@ -107,6 +141,9 @@
     resetGame();
   }
 
+  /**
+   * Expert 모드 파괴 (이벤트 해제 등)
+   */
   function destroy() {
     if (gameLoopId !== null) {
       clearInterval(gameLoopId);
@@ -117,6 +154,9 @@
     stopBtn.removeEventListener('click', onClickStop);
   }
 
+  /**
+   * 난이도 라디오 변경 시 호출
+   */
   function onDifficultyChanged() {
     updateDifficultyConfig();
     if (!isRunning) {
@@ -125,13 +165,15 @@
     }
   }
 
-  // ================= 난이도 / 속도 =================
+  // =========================
+  // 난이도 / 속도 설정
+  // =========================
 
   function updateDifficultyConfig() {
     const checked = [...diffRadios].find(r => r.checked);
     difficulty = checked ? checked.value : "normal";
 
-    // easy: 느림, hard: 빠름
+    // easy: 느림, hard: 빠름 (실제로는 speedMul에 반영)
     if (difficulty === 'easy') {
       speedMul = 1.1;
     } else if (difficulty === 'hard') {
@@ -144,9 +186,11 @@
     computeTickInterval();
   }
 
+  /**
+   * 현재 speedMul / speedFactor를 반영하여 틱 간격 계산 및 루프 재설정
+   */
   function computeTickInterval() {
-    // ★ 속도 계수는 "빠르기" 기준.
-    // speedFactor가 커질수록 더 빠르게 하기 위해 나눗셈 사용
+    // speedFactor가 커질수록 더 빠르게 진행되도록 나눗셈 사용
     currentTickMs = baseTickMs * speedMul / speedFactor;
 
     if (gameLoopId !== null) {
@@ -155,51 +199,52 @@
     }
   }
 
-  // 실제 속도 이벤트 적용: 누적 구조 (10% 단위, ±0.1 / ±0.2)
+  /**
+   * 실제 속도 이벤트 적용
+   * - upcomingSpeedDelta(±0.1 or ±0.2)를 누적
+   * - speedFactor는 0.8~1.2 범위로 클램핑
+   * - HUD에 "예정 변화량" 기준으로 메시지 표시
+   */
   function applyScheduledSpeedChange() {
     // WARNING 단계에서 이미 upcomingSpeedDelta를 정해뒀으면 그대로 사용
     if (upcomingSpeedDelta == null) {
-      // 혹시라도 경고 없이 바로 속도 이벤트가 걸릴 때 대비 (동일 규칙)
       const steps = [-2, -1, 1, 2];      // -20%, -10%, +10%, +20%
       upcomingSpeedDelta = choice(steps) * 0.1;
     }
 
-    // 이번에 "적용하려는" 변화량을 그대로 보관 (부호 고정)
     const plannedDelta = upcomingSpeedDelta;   // -0.2, -0.1, +0.1, +0.2
     const oldFactor = speedFactor;
 
-    // 실제 적용 (누적 + 0.8~1.2 클램핑)
+    // 누적 + 0.8~1.2 범위 클램핑
     let newFactor = speedFactor + plannedDelta;
     if (newFactor > 1.2) newFactor = 1.2;
     if (newFactor < 0.8) newFactor = 0.8;
     speedFactor = newFactor;
 
-    // 실제 틱 간격 재설정
     computeTickInterval();
 
     const actualDeltaPercent = Math.round((speedFactor - oldFactor) * 100);
     const currentPercent = Math.round(speedFactor * 100);
-
-    // 표시용 퍼센트: "예정 변화량" 기준으로 표기 (부호가 WARNING과 반드시 일치)
-    let diffPercent = Math.round(plannedDelta * 100);   // -20, -10, 10, 20
+    let diffPercent = Math.round(plannedDelta * 100);
 
     if (actualDeltaPercent === 0) {
-      // 하한/상한에 걸려서 실제로는 안 바뀐 경우
       showHUD(`속도 변경 적용: 변화 없음 (현재 ${currentPercent}%)`);
     } else {
-      const sign = diffPercent > 0 ? "+" : "";   // 음수는 숫자 자체에 - 포함
+      const sign = diffPercent > 0 ? "+" : "";
       showHUD(`속도 변경 적용: ${sign}${diffPercent}% (현재 ${currentPercent}%)`);
     }
 
-    // 한 번 쓴 예정값은 소모
     upcomingSpeedDelta = null;
   }
 
-  // ================= 게임 상태 =================
+  // =========================
+  // 게임 상태 관리
+  // =========================
 
   function resetGame() {
     const cx = Math.floor(tileCount / 2);
     const cy = Math.floor(tileCount / 2);
+
     // 시작 길이 2칸 (오른쪽 진행)
     snake = [
       { x: cx + 1, y: cy },  // 머리
@@ -215,7 +260,7 @@
 
     applesSinceEvent = 0;
     score = 0;
-    speedFactor = 1.0; // 100%로 리셋
+    speedFactor = 1.0; // 속도 100%로 리셋
     warningActive = false;
     upcomingHazard = null;
     upcomingItem = null;
@@ -241,6 +286,8 @@
   }
 
   function startNewGame() {
+    // 처음 시작할 때만 true로
+    if (!hasStarted) hasStarted = true;
     resetGame();
     isRunning = true;
     if (gameLoopId !== null) clearInterval(gameLoopId);
@@ -282,15 +329,19 @@
     stopGameAsOver();
   }
 
-  // ================= 입력 =================
+  // =========================
+  // 입력 처리
+  // =========================
 
   function onKeyDown(e) {
     const key = e.key;
 
+    // 방향키 / 스페이스 / ESC → 스크롤 방지
     if (["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"," ","Escape"].includes(key)) {
       e.preventDefault();
     }
 
+    // ESC: 일시정지 / 재개
     if (key === 'Escape') {
       if (isRunning && !isPaused) {
         pauseGame();
@@ -318,6 +369,7 @@
       resumeGame();
     }
 
+    // 바로 반대 방향으로 전환 방지
     if (dx === -vx && dy === -vy) return;
     if (dx === -nextVx && dy === -nextVy) return;
 
@@ -327,7 +379,9 @@
     headDy = dy;
   }
 
-  // ================= 유틸 =================
+  // =========================
+  // 유틸 함수
+  // =========================
 
   function posKey(x, y) {
     return `${x},${y}`;
@@ -345,6 +399,9 @@
     scoreEl.textContent = String(score);
   }
 
+  /**
+   * 뱀 / 장애물 / 지뢰 / 아이템 / 예고 장애물이 없는 빈 칸 하나 반환
+   */
   function randomEmptyCell() {
     let x, y, key;
     let safety = 0;
@@ -358,23 +415,65 @@
       snake.some(seg => seg.x === x && seg.y === y) ||
       obstacles.has(key) ||
       (mine && mine.x === x && mine.y === y) ||
-      items.some(it => it.x === x && it.y === y)
+      items.some(it => it.x === x && it.y === y) ||
+      previewObstacles.some(p => p.x === x && p.y === y)
     );
     return { x, y };
   }
 
-  // ================= 사과 / 점수 =================
-
-  function placeApple() {
-    apple = randomEmptyCell();
+  /**
+   * 사과 위치가 장애물/예고 장애물에 3면 이상 둘러싸이지 않았는지 검사
+   * - 상하좌우 기준
+   */
+  function isAppleSafe(x, y) {
+    const dirs = [
+      [1, 0], [-1, 0],
+      [0, 1], [0, -1]
+    ];
+    let blocked = 0;
+    for (const [dx, dy] of dirs) {
+      const nx = x + dx;
+      const ny = y + dy;
+      const k = posKey(nx, ny);
+      if (obstacles.has(k)) {
+        blocked++;
+      } else if (previewObstacles.some(p => p.x === nx && p.y === ny)) {
+        blocked++;
+      }
+    }
+    // 3면 이상 막혀 있으면 비안전
+    return blocked < 3;
   }
 
+  // =========================
+  // 사과 / 점수
+  // =========================
+
+  function placeApple() {
+    let safety = 0;
+    while (true) {
+      const cell = randomEmptyCell();
+      if (isAppleSafe(cell.x, cell.y) || safety > 1000) {
+        apple = cell;
+        break;
+      }
+      safety++;
+    }
+  }
+
+  /**
+   * 사과를 먹었을 때 처리
+   * - 점수 증가
+   * - 이벤트 카운터 증가
+   * - 지뢰 제거(있으면)
+   * - WARNING 단계 / 실제 이벤트 발생 처리
+   */
   function handleAppleEaten() {
     score++;
     updateScoreUI();
     applesSinceEvent++;
 
-    // "다음 사과를 먹을 때까지 유지" → 여기서 지뢰 제거
+    // "다음 사과를 먹을 때까지 유지" → 여기서 추적지뢰 제거
     if (mine) {
       mine = null;
     }
@@ -392,16 +491,17 @@
         spawnObstaclePreview();
         showHUD("WARNING! 다음 사과 후 장애물이 생성됩니다.");
       } else if (upcomingHazard === "mine") {
-        showHUD("WARNING! 다음 사과 후 지뢰가 생성됩니다.");
+        // 지뢰 → 추적지뢰
+        showHUD("WARNING! 다음 사과 후 추적지뢰가 생성됩니다.");
       } else {
-        // ★ 속도 이벤트: 10% 단위 변화량만 미리 계산
+        // 속도 이벤트: 10% 단위 변화량만 미리 계산
         const steps = [-2, -1, 1, 2];      // -20, -10, +10, +20
         const delta = choice(steps) * 0.1; // -0.2, -0.1, +0.1, +0.2
 
-        upcomingSpeedDelta = delta;        // "예정" 값 저장
+        upcomingSpeedDelta = delta;
 
         const previewFactor = Math.max(0.8, Math.min(1.2, speedFactor + delta));
-        const diffPercent = Math.round(delta * 100);          // -20, -10, 10, 20
+        const diffPercent = Math.round(delta * 100);
         const previewPercent = Math.round(previewFactor * 100);
         const sign = diffPercent > 0 ? "+" : "";
         showHUD(`WARNING! 다음 사과 후 속도 ${sign}${diffPercent}% (적용 후: ${previewPercent}%)`);
@@ -422,6 +522,9 @@
     placeApple();
   }
 
+  /**
+   * WARNING에서 예정해둔 위험요소/아이템 실제 적용
+   */
   function applyUpcomingHazardAndItem() {
     if (!upcomingHazard) {
       upcomingHazard = choice(["obstacle", "mine", "speed"]);
@@ -442,7 +545,7 @@
     } else if (upcomingHazard === "mine") {
       spawnMine();
     } else {
-      applyScheduledSpeedChange(); // 여기서만 실제 speedFactor 변경
+      applyScheduledSpeedChange(); // speedFactor 변경
     }
 
     // 아이템 생성
@@ -453,7 +556,9 @@
     upcomingSpeedDelta = null;
   }
 
-  // ================= 위험요소 / 아이템 =================
+  // =========================
+  // 위험요소 / 아이템 생성
+  // =========================
 
   function isCellFreeForObstacle(x, y) {
     if (x < 0 || x >= tileCount || y < 0 || y >= tileCount) return false;
@@ -466,6 +571,10 @@
     return true;
   }
 
+  /**
+   * 장애물 예고 패턴 생성 (corners / crosses / xshapes / lines / squares / split)
+   * - 실제 장애물은 이벤트 발생 시 obstacles로 옮김
+   */
   function spawnObstaclePreview() {
     previewObstacles = [];
 
@@ -639,6 +748,10 @@
     }
   }
 
+  /**
+   * 추적지뢰 생성
+   * - 뱀 머리 근처(±2)에는 생성하지 않도록 회피
+   */
   function spawnMine() {
     const head = snake[0];
     let x, y;
@@ -654,6 +767,13 @@
     mineTick = 0;
   }
 
+  /**
+   * 아이템 생성
+   * - bomb: 4개
+   * - superbomb: 1개
+   * - shrink: 3개
+   * - teleport/phase: 1개
+   */
   function spawnItem(type) {
     const count =
       type === "bomb"      ? 4 :
@@ -676,7 +796,10 @@
     showHUD(`아이템 등장: ${name}`);
   }
 
-  // 특정 장애물 칸에서 4방향으로 연결된 전체 덩어리 구하기 (특수폭탄용)
+  /**
+   * 특정 장애물 칸에서 4방향 + 대각선까지 연결된 덩어리(그룹) 찾기
+   * - 특수폭탄이 제거할 대상
+   */
   function floodFillObstacleGroup(startKey) {
     const stack = [startKey];
     const visited = new Set([startKey]);
@@ -688,10 +811,10 @@
       group.push({ x, y });
 
       const neighbors = [
-        [x+1, y],
-        [x-1, y],
-        [x, y+1],
-        [x, y-1]
+        [x+1, y], [x-1, y],
+        [x, y+1], [x, y-1],
+        [x+1, y+1], [x+1, y-1],
+        [x-1, y+1], [x-1, y-1]
       ];
       for (const [nx, ny] of neighbors) {
         const nk = posKey(nx, ny);
@@ -704,6 +827,9 @@
     return group;
   }
 
+  /**
+   * 아이템 효과 적용
+   */
   function applyItemEffect(item) {
     // ===== 폭탄 / 특수폭탄 =====
     if (item.type === "bomb" || item.type === "superbomb") {
@@ -745,12 +871,10 @@
           }
         }
 
-        let removedCount = 0;
         for (const c of affectedCells) {
           const k = posKey(c.x, c.y);
           if (obstacles.has(k)) {
             obstacles.delete(k);
-            removedCount++;
           }
         }
 
@@ -788,6 +912,7 @@
       }
 
     } else if (item.type === "shrink") {
+      // 길이 1칸 감소 (1칸 이상 남도록 체크)
       if (snake.length > 1) snake.pop();
       showHUD("길이 축소: 뱀 길이가 1칸 줄었습니다.");
 
@@ -804,7 +929,9 @@
     }
   }
 
-  // ================= 게임 루프 =================
+  // =========================
+  // 게임 루프 / 이동
+  // =========================
 
   function gameOver() {
     isGameOver = true;
@@ -871,24 +998,25 @@
       else if (newY >= tileCount) newY = 0;
     }
 
-    // 자기 몸
+    // 자기 몸 충돌
     if (!isPhasing && snake.some(seg => seg.x === newX && seg.y === newY)) {
       gameOver(); return;
     }
 
-    // 장애물
+    // 장애물 충돌
     if (!isPhasing && obstacles.has(posKey(newX, newY))) {
       gameOver(); return;
     }
 
-    // 지뢰
+    // 추적지뢰 충돌
     if (!isPhasing && mine && mine.x === newX && mine.y === newY) {
       gameOver(); return;
     }
 
+    // 머리 새로운 위치로 이동
     snake.unshift({ x: newX, y: newY });
 
-    // 차원이동 출구
+    // 차원이동 출구 도달
     if (isPhasing && phaseExit &&
         newX === phaseExit.x && newY === phaseExit.y) {
       isPhasing = false;
@@ -896,7 +1024,7 @@
       showHUD("차원이동 종료");
     }
 
-    // 아이템
+    // 아이템 획득
     if (!isPhasing) {
       const idx = items.findIndex(it => it.x === newX && it.y === newY);
       if (idx !== -1) {
@@ -906,14 +1034,15 @@
       }
     }
 
-    // 사과
+    // 사과 획득
     if (!isPhasing && apple && newX === apple.x && newY === apple.y) {
       handleAppleEaten();
     } else {
+      // 사과가 아니면 꼬리 제거 (길이 유지)
       snake.pop();
     }
 
-    // 지뢰 이동 (2틱마다)
+    // 추적지뢰 이동 (2틱마다)
     if (mine) {
       mineTick++;
       if (mineTick % 2 === 0) {
@@ -928,6 +1057,9 @@
     draw();
   }
 
+  /**
+   * 추적지뢰가 뱀 머리를 향해 한 칸씩 이동
+   */
   function moveMineTowardsHead() {
     if (!mine) return;
     const head = snake[0];
@@ -956,7 +1088,9 @@
     }
   }
 
-  // ================= 그리기 =================
+  // =========================
+  // 그리기 유틸
+  // =========================
 
   function drawBlock(x, y, color) {
     ctx.fillStyle = color;
@@ -1120,11 +1254,30 @@
     ctx.lineWidth = 1;
   }
 
+  // 길이 감소 아이템: 초록 배경 + "-1" 표시
+  function drawShrinkItem(x, y) {
+    const px = x * tileSize;
+    const py = y * tileSize;
+    ctx.fillStyle = "#4caf50";
+    ctx.fillRect(px, py, tileSize, tileSize);
+
+    ctx.fillStyle = "#ffffff";
+    ctx.font = `${Math.floor(tileSize * 0.7)}px Arial`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("-1", px + tileSize / 2, py + tileSize / 2);
+  }
+
+  // =========================
+  // 전체 화면 그리기
+  // =========================
+
   function draw() {
     // 기본 배경
     ctx.fillStyle = "#f5f5f5";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+    // 사과
     if (apple) drawApple(apple.x, apple.y);
 
     // 장애물
@@ -1138,7 +1291,7 @@
     previewObstacles.forEach(p => drawBlock(p.x, p.y, "#c05050"));
     ctx.globalAlpha = 1.0;
 
-    // 폭탄 하이라이트(주황색)
+    // 폭탄 하이라이트(주황색 오버레이)
     if (bombHighlights.length > 0) {
       ctx.globalAlpha = 0.35;
       ctx.fillStyle = "#ff9800";
@@ -1148,11 +1301,12 @@
       ctx.globalAlpha = 1.0;
     }
 
+    // 텔레포트 엣지(벽 표시)
     if (portalEdge && !portalEdge.used) {
       drawTeleportEdge(portalEdge);
     }
 
-    // 차원이동 출구 (반전 전, 내부용 표시)
+    // 차원이동 출구 (반전 전: 흰 배경 + 보라 무늬로 그릴 준비)
     if (isPhasing && phaseExit) {
       drawPhaseItem(phaseExit.x, phaseExit.y, true);
     }
@@ -1168,49 +1322,78 @@
       } else if (item.type === "phase") {
         drawPhaseItem(item.x, item.y, false);
       } else { // shrink
-        drawBlock(item.x, item.y, "#44aa44");
+        drawShrinkItem(item.x, item.y);
       }
     }
 
     // 뱀
     if (!snake.length) return;
+
+    // 머리
     drawSnakeHead(snake[0].x, snake[0].y);
+
+    // 몸통
     for (let i = 1; i < snake.length - 1; i++) {
       const seg = snake[i];
-      drawBlock(seg.x, seg.y, "#2e7d32");
+      const px = seg.x * tileSize;
+      const py = seg.y * tileSize;
+
+      // 몸통 채우기
+      ctx.fillStyle = "#2e7d32";
+      ctx.fillRect(px, py, tileSize, tileSize);
+
+      // 몸통 윤곽선
+      ctx.strokeStyle = "#1b5e20";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(px, py, tileSize, tileSize);
     }
+
+    // 꼬리
     if (snake.length > 1) {
       const tail = snake[snake.length - 1];
       const prev = snake[snake.length - 2];
       drawSnakeTail(tail.x, tail.y, prev);
     }
 
-    // 지뢰 (항상 맨 위)
+    // 추적지뢰 (항상 맨 위)
     if (mine) {
       drawMine(mine.x, mine.y);
     }
 
-    // WARNING 오버레이 (연하게)
+    // WARNING 오버레이
     if (warningActive && !isGameOver) {
       ctx.fillStyle = "rgba(255,0,0,0.07)";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.fillStyle = "#ff3333";
       ctx.font = "32px Arial";
       ctx.textAlign = "center";
-      ctx.fillText("WARNING!", canvas.width / 2, 40);
+
+      // 다음 위험요소명을 같이 표시
+      let hazardName = "";
+      if (upcomingHazard === "obstacle") hazardName = "장애물";
+      else if (upcomingHazard === "mine") hazardName = "추적지뢰";
+      else if (upcomingHazard === "speed") hazardName = "속도";
+
+      const warningText = hazardName ? `WARNING!(${hazardName})` : "WARNING!";
+      ctx.fillText(warningText, canvas.width / 2, 40);
     }
 
-    // HUD 메시지
+    // HUD 메시지 (아이템 등장/효과, 속도 변경 안내 등)
     if (hudTimer > 0 && hudMessage) {
-      ctx.fillStyle = "rgba(0,0,0,0.6)";
-      ctx.fillRect(10, 10, canvas.width - 20, 30);
+      // WARNING과 겹치지 않도록 위치 조정
+      const hudY = (warningActive && !isGameOver) ? 50 : 10;
+      const boxHeight = 30;
+
+      ctx.fillStyle = "rgba(0,0,0,0.35)"; // 살짝 투명한 검은 배경
+      ctx.fillRect(10, hudY, canvas.width - 20, boxHeight);
       ctx.fillStyle = "#ffffff";
       ctx.font = "16px Arial";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(hudMessage, canvas.width/2, 25);
+      ctx.fillText(hudMessage, canvas.width/2, hudY + boxHeight/2);
     }
 
+    // 게임오버 / 일시정지 오버레이
     drawOverlay();
 
     // 차원이동 중이면 전체 색 반전
@@ -1221,36 +1404,55 @@
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.restore();
 
-      // 출구는 반전 금지 → 반전 후 다시 정상 색으로
+      // 출구는 반전 후에도 "흰 배경 + 보라 무늬"로 다시 그려서 눈에 띄게
       if (phaseExit) {
-        drawPhaseItem(phaseExit.x, phaseExit.y, false);
+        drawPhaseItem(phaseExit.x, phaseExit.y, true);
       }
     }
   }
 
   function drawOverlay() {
-    if (isGameOver) {
-      ctx.fillStyle = "rgba(0,0,0,0.5)";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = "#fff";
-      ctx.font = "32px Arial";
-      ctx.textAlign = "center";
-      ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2 - 10);
-      ctx.font = "16px Arial";
-      ctx.fillText("Start 버튼으로 새 게임 시작", canvas.width / 2, canvas.height / 2 + 20);
-    } else if (isRunning && isPaused) {
-      ctx.fillStyle = "rgba(0,0,0,0.4)";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = "#fff";
-      ctx.font = "28px Arial";
-      ctx.textAlign = "center";
-      ctx.fillText("PAUSED", canvas.width / 2, canvas.height / 2);
-      ctx.font = "14px Arial";
-      ctx.fillText("ESC 키로 다시 시작", canvas.width / 2, canvas.height / 2 + 24);
-    }
-  }
+  if (isGameOver) {
+    ctx.fillStyle = "rgba(0,0,0,0.5)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "#fff";
+    ctx.font = "32px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2 - 10);
+    ctx.font = "16px Arial";
+    ctx.fillText("Start 버튼으로 새 게임 시작", canvas.width / 2, canvas.height / 2 + 20);
 
-  // ================= 뱀 머리 / 꼬리 =================
+  } else if (isRunning && isPaused) {
+    ctx.fillStyle = "rgba(0,0,0,0.4)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "#fff";
+    ctx.font = "28px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("PAUSED", canvas.width / 2, canvas.height / 2);
+    ctx.font = "14px Arial";
+    ctx.fillText("ESC 키로 다시 시작", canvas.width / 2, canvas.height / 2 + 24);
+
+  // ★ 수정: 아직 한 번도 시작 안 했을 때만 시작 안내
+  } else if (!hasStarted && !isRunning && !isGameOver) {
+    ctx.fillStyle = "rgba(0,0,0,0.4)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = "#ffffff";
+    ctx.textAlign = "center";
+
+    ctx.font = "24px Arial";
+    ctx.fillText("Snake Expert", canvas.width / 2, canvas.height / 2 - 30);
+
+    ctx.font = "16px Arial";
+    ctx.fillText("Start 버튼 또는 방향키를 눌러 시작", canvas.width / 2, canvas.height / 2 + 5);
+  }
+}
+
+
+
+  // =========================
+  // 뱀 머리 / 꼬리 (윤곽선 포함)
+  // =========================
 
   function drawSnakeHead(x, y) {
     const px = x * tileSize;
@@ -1271,8 +1473,16 @@
       corners.bl = r; corners.br = r;
     }
 
+    // 채우기
     roundRectPath(px, py, tileSize, tileSize, corners);
     ctx.fill();
+
+    // 윤곽선
+    ctx.strokeStyle = "#1b5e20";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    roundRectPath(px, py, tileSize, tileSize, corners);
+    ctx.stroke();
 
     drawEyes(px, py);
   }
@@ -1298,8 +1508,16 @@
       corners.tl = r; corners.tr = r;
     }
 
+    // 채우기
     roundRectPath(px, py, tileSize, tileSize, corners);
     ctx.fill();
+
+    // 윤곽선
+    ctx.strokeStyle = "#1b5e20";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    roundRectPath(px, py, tileSize, tileSize, corners);
+    ctx.stroke();
   }
 
   function drawEyes(px, py) {
