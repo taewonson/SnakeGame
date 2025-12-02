@@ -448,3 +448,274 @@ a {
 .ranking-list li:last-child {
   border-bottom: none;
 }
+
+/* rules.html - 아이템 / 위험요소 아이콘 레이아웃 확장 */
+
+/* rules 섹션 공통 */
+.rules-title {
+  margin-top: 0;
+  margin-bottom: 16px;
+  font-size: 1.4rem;
+}
+
+.rules-section {
+  display: none;
+}
+
+.rules-section.active {
+  display: block;
+}
+
+.rules-list {
+  list-style: disc;
+  padding-left: 20px;
+  margin: 8px 0 16px;
+}
+
+.rules-list li + li {
+  margin-top: 4px;
+}
+
+.rules-note {
+  font-size: 0.9rem;
+  color: #555;
+  margin-bottom: 12px;
+}
+
+/* 좌측 메뉴 버튼 (이미 기본 스타일이 있을 수 있어서, 살짝만 보강) */
+.rules-menu-btn {
+  display: block;
+  width: 100%;
+  text-align: left;
+  margin-bottom: 6px;
+  padding: 8px 10px;
+  font-size: 0.9rem;
+  border: none;
+  border-radius: 4px;
+  background: #f0f0f0;
+  cursor: pointer;
+}
+
+.rules-menu-btn.active {
+  background: #1976d2;
+  color: #fff;
+}
+
+/* 아이콘 영역 전체 레이아웃 */
+.rules-icons-wrapper {
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1.2fr);
+  gap: 16px;
+}
+
+@media (max-width: 900px) {
+  .rules-icons-wrapper {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* 필터 버튼 */
+.rules-filter {
+  margin-bottom: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.rules-filter-btn {
+  padding: 6px 10px;
+  font-size: 0.8rem;
+  border-radius: 999px;
+  border: 1px solid #ccc;
+  background: #fff;
+  cursor: pointer;
+}
+
+.rules-filter-btn.active {
+  background: #1976d2;
+  border-color: #1976d2;
+  color: #fff;
+}
+
+/* 아이콘 카드 그리드 */
+.rules-icon-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 10px;
+  align-content: flex-start;
+}
+
+.rule-icon-card {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 8px;
+  background: #ffffff;
+  cursor: pointer;
+  text-align: center;
+  transition: box-shadow 0.15s ease, transform 0.15s ease, border-color 0.15s ease;
+}
+
+.rule-icon-card:hover {
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+  transform: translateY(-1px);
+}
+
+.rule-icon-card.active {
+  border-color: #1976d2;
+  box-shadow: 0 0 0 2px rgba(25,118,210,0.25);
+}
+
+.rule-icon-visual {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 6px;
+}
+
+.rule-icon-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.rule-icon-tag {
+  margin-top: 2px;
+  font-size: 0.75rem;
+  color: #555;
+}
+
+/* 오른쪽 상세 설명 패널 */
+.rules-detail-panel {
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  background: #ffffff;
+  padding: 12px 14px;
+  font-size: 0.9rem;
+}
+
+.rules-detail-panel h3 {
+  margin-top: 0;
+  margin-bottom: 6px;
+  font-size: 1rem;
+}
+
+/* =====================
+   아이콘 도형 스타일
+   (실제 게임 그래픽 느낌을 작게 축소한 버전)
+   ===================== */
+
+/* 사과 아이콘 */
+.icon-apple {
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #ffebee, #e53935);
+  position: relative;
+}
+
+.icon-apple::before {
+  content: "";
+  position: absolute;
+  width: 14px;
+  height: 6px;
+  background: #2e7d32;
+  border-radius: 50%;
+  top: 6px;
+  left: 22px;
+}
+
+/* 폭탄 */
+.icon-bomb {
+  position: relative;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #eeeeee, #757575);
+}
+
+.icon-bomb::before {
+  /* 심지 */
+  content: "";
+  position: absolute;
+  width: 10px;
+  height: 16px;
+  border-radius: 999px;
+  background: #5d4037;
+  top: 4px;
+  right: 8px;
+}
+
+/* 특수 폭탄 (노란 테두리) */
+.icon-superbomb {
+  position: relative;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #eeeeee, #757575);
+  box-shadow: 0 0 0 3px #ffeb3b;
+}
+
+/* 길이 축소 (-1) */
+.icon-shrink {
+  background: #43a047;
+  border-radius: 6px;
+  position: relative;
+}
+
+.icon-shrink::before {
+  content: "-1";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -52%);
+  font-weight: 700;
+  color: #fff;
+  font-size: 18px;
+}
+
+/* 텔레포트 (포탈 링) */
+.icon-teleport {
+  position: relative;
+}
+
+.icon-teleport::before,
+.icon-teleport::after {
+  content: "";
+  position: absolute;
+  inset: 4px 8px;
+  border-radius: 50%;
+  border-width: 4px;
+  border-style: solid;
+}
+
+.icon-teleport::before {
+  border-color: #1976d2 transparent;
+  transform: rotate(20deg);
+}
+
+.icon-teleport::after {
+  border-color: #ff9800 transparent;
+  transform: rotate(-20deg);
+}
+
+/* 차원이동 (보라색 + 흰 소용돌이) */
+.icon-phase {
+  position: relative;
+  border-radius: 50%;
+  background: #9c27b0;
+  overflow: hidden;
+}
+
+.icon-phase::before,
+.icon-phase::after {
+  content: "";
+  position: absolute;
+  width: 80%;
+  height: 80%;
+  border-radius: 50%;
+  border: 3px solid #ffffff;
+  top: 50%;
+  left: 50%;
+  transform-origin: center;
+}
+
+.icon-phase::before {
+  transform: translate(-50%, -50%) rotate(20deg);
+}
+
+.icon-phase::after {
+  transform: translate(-50%, -50%) rotate(-20deg);
+}

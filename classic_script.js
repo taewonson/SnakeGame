@@ -369,7 +369,7 @@
     ctx.textAlign="center";
     ctx.fillText("GAME OVER", canvas.width/2, canvas.height/2 - 10);
     ctx.font="16px Arial";
-    ctx.fillText("Start 버튼으로 새 게임 시작", canvas.width/2, canvas.height/2 + 20);
+    ctx.fillText("Start 버튼 또는 방향키를 눌러 재시작", canvas.width/2, canvas.height/2 + 20);
 
   } else if(isRunning && isPaused){
     ctx.fillStyle="rgba(0,0,0,0.4)";
